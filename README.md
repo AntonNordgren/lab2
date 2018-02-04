@@ -1,1 +1,1 @@
-# lab2
+https://antonnordgren.github.io/lab2/
