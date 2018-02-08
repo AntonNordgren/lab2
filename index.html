@@ -1,18 +1,173 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>This is the title</title>
-        <meta charset = "utf-8">
-        <link href = "style.css" type = "text/css" rel = "stylesheet">
-        <script src="https://www.gstatic.com/firebasejs/4.9.1/firebase.js"></script>
-    </head>
-    <body>
-        <div id = "content">
-            <button id = "githubButton">Log in to Github</button>
-            <div id = "loggedInContent">
-                <img id = "avatar" height = "100" width = "100">
-            </div>
-        </div>
-        <script src = "script.js"></script>
-    </body>
+<html lang="sv">
+<head>
+	<title>Firebase demo</title>
+	<meta charset="utf-8" />
+	<style>
+		body {
+			background-color: #E8DDBD;
+            font-family: helvetica, sans-serif;
+            color: #C25848
+		}
+        button {
+            width: 200px;
+            height: 60px;
+            border: none;
+            border-radius: 10px;
+            background-color: #A9B79E;
+            font-size: 20px;
+            font-family: helvetica, sans-serif;
+            margin: auto;
+            margin-top: 10px;
+            color: #9D1D36;
+        }
+        #btns {
+            width: 200px;
+            margin: auto;
+        }
+        h1 {
+            text-align: center;
+        }
+        
+        #profileContainer {
+            width: 400px;
+            height: auto;
+            margin: auto;
+            text-align: center;
+            font-size: 30px;
+        }
+	</style>
+    
+   
+
+<script src="https://www.gstatic.com/firebasejs/4.9.1/firebase.js"></script>
+<script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyBiqFIEeH5MSju3SVAtaYrbpH-LBaJiT9s",
+    authDomain: "lab2-64546.firebaseapp.com",
+    databaseURL: "https://lab2-64546.firebaseio.com",
+    projectId: "lab2-64546",
+    storageBucket: "lab2-64546.appspot.com",
+    messagingSenderId: "619044572090"
+  };
+  firebase.initializeApp(config);
+</script>
+
+	<script>        
+    // Twitter Auth
+        let providerTwitter = new firebase.auth.TwitterAuthProvider();
+        firebase.auth().languageCode = 'en';
+        providerTwitter.setCustomParameters({
+        'lang': 'en'
+        });
+    
+    // Google Auth
+    let providerGoogle = new firebase.auth.GoogleAuthProvider();  
+    providerGoogle.addScope('https://www.googleapis.com/auth/contacts.readonly');
+    firebase.auth().languageCode = 'en';
+        // To apply the default browser preference instead of explicitly setting it.
+        // firebase.auth().useDeviceLanguage();
+    providerGoogle.setCustomParameters({
+        'login_hint': 'user@example.com'
+    });
+	
+    //Github auth
+    let provider = new firebase.auth.GithubAuthProvider();
+	provider.setCustomParameters({  // optional
+	  'allow_signup': 'true'
+	});
+        
+	window.addEventListener('load', function() {
+		document.getElementById('gitBtn').addEventListener('click', function(e) {
+			let profile = document.getElementById('profile');
+            let profilePic = document.getElementById('profilePic');
+            
+            firebase.auth().signInWithPopup(provider).then(function(result) {
+				var user = result.additionalUserInfo;
+				console.log('Sign-in result: logged in as ', user.username);
+				profile.innerText = 'Signed in as: ' + user.username;
+                profilePic.style.display = "inline-block";
+                profilePic.src = user.profile.avatar_url;
+                console.log(result);
+                fetchFromDatabase();
+			}).catch(function(error) {
+				console.log('Sign-in result, error: ' + error.message);
+			});
+		});
+	
+        document.getElementById('googleBtn').addEventListener('click', function(e) {
+          firebase.auth().signInWithPopup(providerGoogle).then(function(result) {
+          // This gives you a Google Access Token. You can use it to access the Google API.
+          var token = result.credential.accessToken;
+          // The signed-in user info.
+          var user = result.user;
+          console.log('Sign-in result: logged in as ', user.displayName);
+          profile.innerText = 'Signed in as: ' + user.displayName;
+          profilePic.style.display = "inline-block";
+          profilePic.src = user.photoURL;
+          console.log(result);      
+          fetchFromDatabase();
+        }).catch(function(error) {
+				console.log('Sign-in result, error: ' + error.message);
+			});    
+        })
+        
+        document.getElementById('twitterBtn').addEventListener('click', function(e) {
+          
+          let profile = document.getElementById('profile');
+          let profilePic = document.getElementById('profilePic');
+          firebase.auth().signInWithPopup(providerTwitter).then(function(result) {
+              // This gives you a the Twitter OAuth 1.0 Access Token and Secret.
+              // You can use these server side with your app's credentials to access the Twitter API.
+              var token = result.credential.accessToken;
+              var secret = result.credential.secret;
+              // The signed-in user info.
+              var user = result.user;
+              console.log('Sign-in result: logged in as ', user.displayName);
+              profile.innerText = 'Signed in as: ' + user.displayName;
+              profilePic.src = user.photoURL;
+              
+              fetchFromDatabase();
+            }).catch(function(error) {
+              // Handle Errors here.
+              var errorCode = error.code;
+              var errorMessage = error.message;
+              // The email of the user's account used.
+              var email = error.email;
+              // The firebase.auth.AuthCredential type that was used.
+              var credential = error.credential;
+              console.log('Sign-in result, error: ' + error.message);
+            });  
+        })
+        
+        document.getElementById('signoutButton').addEventListener('click', function(event) {
+			firebase.auth().signOut().then(function(result) {
+                let profile = document.getElementById('profile');
+                let profilePic = document.getElementById('profilePic');
+                profile.innerText = 'Please sign in'
+                profilePic.style.display = "none";
+				console.log('Signed out user');
+			})
+			.catch(function(error) {
+				console.log('Sign-out failed');
+			})
+		})
+    
+    })  // window.load slutar
+	</script>
+</head>
+<body>
+	<h1>Firebase Lab 2 </h1>
+    <div id='profileContainer'>
+        <p id='profile'>Please sign in</p>
+        <img height="50px" with="50px" id='profilePic'> 
+    </div>
+    <div id='btns'>
+	<button id="gitBtn">Sign in with GitHub</button>
+    <button id='googleBtn'>Sign in with google</button>
+    <button id='twitterBtn'>Sign in with Twitter</button>
+    <button id="signoutButton">Sign out user</button>
+    </div>
+</body>
 </html>
